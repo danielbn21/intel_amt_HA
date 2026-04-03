@@ -63,7 +63,7 @@ All communication is done via WS-Management (SOAP/HTTP) directly to the AMT devi
 3. Find **Intel AMT** in HACS and click **Download**
 4. Restart Home Assistant
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=YOUR_GITHUB_USER&repository=intel_amt&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=danielbn21&repository=intel_amt_HA&category=integration)
 
 ---
 
