@@ -3,7 +3,7 @@
   "name": "Intel AMT",
   "codeowners": [],
   "config_flow": true,
-  "documentation": "https://github.com/your-repo/intel_amt",
+  "documentation": "https://github.com/danielbn21/intel_amt_HA",
   "integration_type": "device",
   "iot_class": "local_polling",
   "requirements": ["aiohttp>=3.8.0"],
