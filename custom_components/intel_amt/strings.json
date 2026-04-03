@@ -1,0 +1,37 @@
+{
+  "config": {
+    "title": "Intel AMT",
+    "step": {
+      "user": {
+        "title": "Connect to Intel AMT Device",
+        "description": "Enter the connection details for your Intel AMT device. The default port is 16992 (HTTP) or 16993 (HTTPS/TLS). Username is typically 'admin'.",
+        "data": {
+          "host": "Host / IP Address",
+          "username": "Username",
+          "password": "AMT Password",
+          "port": "Port",
+          "tls": "Use TLS (HTTPS)",
+          "scan_interval": "Poll Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the device. Check the host, port, and that AMT is enabled.",
+      "invalid_auth": "Invalid username or password.",
+      "unknown": "Unexpected error. Check the logs for details."
+    },
+    "abort": {
+      "already_configured": "This AMT device is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Intel AMT Options",
+        "data": {
+          "scan_interval": "Poll Interval (seconds)"
+        }
+      }
+    }
+  }
+}

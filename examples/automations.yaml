@@ -1,0 +1,163 @@
+# ============================================================================
+# Intel AMT – Home Assistant Automation Examples
+# ============================================================================
+# Copy any of these into your automations.yaml or paste them into the
+# Automations UI editor (use the three-dot menu → Edit in YAML).
+#
+# Replace:
+#   - "192_168_1_50" with the unique ID suffix of YOUR AMT device
+#     (found in Settings → Devices & Services → Intel AMT → entity names)
+#   - entity IDs (e.g. binary_sensor.intel_amt_...) with your actual entities
+#     (check Settings → Entities and search "intel_amt")
+# ============================================================================
+
+# ── 1. Auto power-on a machine every weekday morning ────────────────────────
+- alias: "AMT: Power on workstation weekday mornings"
+  description: "Turns on the managed PC at 08:00 Mon–Fri"
+  trigger:
+    - platform: time
+      at: "08:00:00"
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+  action:
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_power_on
+  mode: single
+
+# ── 2. Graceful shutdown every weekday evening ───────────────────────────────
+- alias: "AMT: Graceful shutdown workstation weekday evenings"
+  description: "Sends graceful OS shutdown at 20:00 Mon–Fri (requires LMS in OS)"
+  trigger:
+    - platform: time
+      at: "20:00:00"
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+    # Only shut down if it's actually on
+    - condition: state
+      entity_id: binary_sensor.intel_amt_192_168_1_50_power
+      state: "on"
+  action:
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_shutdown_graceful
+  mode: single
+
+# ── 3. Hard power-off if graceful shutdown didn't work after 5 minutes ───────
+- alias: "AMT: Force power-off if still on after scheduled shutdown"
+  description: >
+    5 minutes after the graceful shutdown automation fires, check if the
+    machine is still on and if so, do a hard power-off.
+  trigger:
+    - platform: time
+      at: "20:05:00"
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+    - condition: state
+      entity_id: binary_sensor.intel_amt_192_168_1_50_power
+      state: "on"
+  action:
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_power_off_hard
+    - service: notify.persistent_notification
+      data:
+        title: "Intel AMT"
+        message: "Workstation did not shut down gracefully — forced hard power-off."
+  mode: single
+
+# ── 4. Notify when machine unexpectedly powers on ────────────────────────────
+- alias: "AMT: Alert when workstation powers on outside work hours"
+  description: "Sends notification if the machine comes on between 22:00 and 07:00"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.intel_amt_192_168_1_50_power
+      to: "on"
+  condition:
+    - condition: time
+      after: "22:00:00"
+      before: "07:00:00"
+  action:
+    - service: notify.mobile_app_your_phone
+      data:
+        title: "⚠️ Intel AMT Alert"
+        message: "Workstation powered on outside working hours!"
+        data:
+          actions:
+            - action: "AMT_POWEROFF"
+              title: "Power Off Now"
+  mode: single
+
+# ── 5. Handle mobile notification action — power off from phone ──────────────
+- alias: "AMT: Power off from mobile notification tap"
+  trigger:
+    - platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: "AMT_POWEROFF"
+  action:
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_power_off_hard
+  mode: single
+
+# ── 6. Power cycle on NAS/server after network loss detected ─────────────────
+- alias: "AMT: Power cycle server if unreachable for 5 minutes"
+  description: >
+    If the machine's power sensor goes unavailable (coordinator fails) or
+    you have a ping binary sensor that goes offline, trigger a power cycle.
+    Requires a separate ping sensor for the OS IP.
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.ping_workstation   # your ping/device_tracker
+      to: "unavailable"
+      for:
+        minutes: 5
+  condition:
+    # Only cycle if AMT still says it's on (so it's hung, not shut down)
+    - condition: state
+      entity_id: binary_sensor.intel_amt_192_168_1_50_power
+      state: "on"
+  action:
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_power_cycle
+    - service: notify.persistent_notification
+      data:
+        title: "Intel AMT"
+        message: "Workstation was unreachable for 5 minutes — power cycle sent."
+  mode: single
+
+# ── 7. Log all power state changes to persistent notifications ───────────────
+- alias: "AMT: Log all power state changes"
+  trigger:
+    - platform: state
+      entity_id: sensor.intel_amt_192_168_1_50_power_state
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "Intel AMT Power State Change"
+        message: >
+          Workstation changed from '{{ trigger.from_state.state }}'
+          to '{{ trigger.to_state.state }}'
+          at {{ now().strftime('%H:%M:%S') }}
+  mode: queued
+  max: 10

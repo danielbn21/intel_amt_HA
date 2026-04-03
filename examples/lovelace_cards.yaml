@@ -1,0 +1,210 @@
+# ============================================================================
+# Intel AMT – Lovelace Dashboard Examples
+# ============================================================================
+# Paste any of these cards into the Lovelace YAML editor.
+# (Dashboard → Edit → three-dot menu → Edit in raw config editor)
+#
+# Replace entity IDs with your actual ones.
+# ============================================================================
+
+
+# ── Card 1: Full AMT Control Panel (recommended) ─────────────────────────────
+# Uses mushroom-cards if installed, falls back gracefully.
+# Paste this as a vertical-stack card.
+
+type: vertical-stack
+cards:
+  # Title + status row
+  - type: horizontal-stack
+    cards:
+      - type: entity
+        entity: binary_sensor.intel_amt_192_168_1_50_power
+        name: Power
+        icon: mdi:desktop-tower
+        state_color: true
+      - type: entity
+        entity: sensor.intel_amt_192_168_1_50_power_state
+        name: State
+        icon: mdi:information-outline
+
+  # Primary power toggle
+  - type: tile
+    entity: switch.intel_amt_192_168_1_50_power_switch
+    name: Power Switch
+    icon: mdi:power
+    color: red
+
+  # Action buttons row 1 — main controls
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Power On
+        icon: mdi:power-on
+        tap_action:
+          action: call-service
+          service: button.press
+          service_data:
+            entity_id: button.intel_amt_192_168_1_50_power_on
+        icon_height: 40px
+
+      - type: button
+        name: Shutdown
+        icon: mdi:power-sleep
+        tap_action:
+          action: call-service
+          service: button.press
+          service_data:
+            entity_id: button.intel_amt_192_168_1_50_shutdown_graceful
+        icon_height: 40px
+
+      - type: button
+        name: Reboot
+        icon: mdi:restart
+        tap_action:
+          action: call-service
+          service: button.press
+          service_data:
+            entity_id: button.intel_amt_192_168_1_50_reboot_graceful
+        icon_height: 40px
+
+  # Action buttons row 2 — advanced / emergency
+  - type: horizontal-stack
+    cards:
+      - type: button
+        name: Hard Off
+        icon: mdi:power-off
+        tap_action:
+          action: call-service
+          service: button.press
+          service_data:
+            entity_id: button.intel_amt_192_168_1_50_power_off_hard
+        icon_height: 40px
+
+      - type: button
+        name: Hard Reset
+        icon: mdi:restart-alert
+        tap_action:
+          action: call-service
+          service: button.press
+          service_data:
+            entity_id: button.intel_amt_192_168_1_50_reset_hard
+        icon_height: 40px
+
+      - type: button
+        name: Power Cycle
+        icon: mdi:power-cycle
+        tap_action:
+          action: call-service
+          service: button.press
+          service_data:
+            entity_id: button.intel_amt_192_168_1_50_power_cycle
+        icon_height: 40px
+
+  # Conditional row: hibernate + NMI (hidden unless machine is on)
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.intel_amt_192_168_1_50_power
+        state: "on"
+    card:
+      type: horizontal-stack
+      cards:
+        - type: button
+          name: Hibernate
+          icon: mdi:weather-night
+          tap_action:
+            action: call-service
+            service: button.press
+            service_data:
+              entity_id: button.intel_amt_192_168_1_50_hibernate
+          icon_height: 40px
+
+        - type: button
+          name: Send NMI
+          icon: mdi:bug
+          tap_action:
+            action: call-service
+            service: button.press
+            service_data:
+              entity_id: button.intel_amt_192_168_1_50_send_nmi
+          icon_height: 40px
+
+        - type: button
+          name: Safe Reboot
+          icon: mdi:shield-refresh
+          tap_action:
+            action: call-service
+            service: script.amt_safe_reboot
+          icon_height: 40px
+
+
+# ── Card 2: Minimal status badge row ─────────────────────────────────────────
+# Small — good for a sidebar or overview page.
+
+type: entities
+title: Workstation (AMT)
+icon: mdi:desktop-tower-monitor
+entities:
+  - entity: binary_sensor.intel_amt_192_168_1_50_power
+    name: Power
+  - entity: sensor.intel_amt_192_168_1_50_power_state
+    name: State
+  - entity: switch.intel_amt_192_168_1_50_power_switch
+    name: Toggle Power
+  - type: divider
+  - entity: button.intel_amt_192_168_1_50_power_on
+    name: Power On
+  - entity: button.intel_amt_192_168_1_50_shutdown_graceful
+    name: Graceful Shutdown
+  - entity: button.intel_amt_192_168_1_50_reboot_graceful
+    name: Graceful Reboot
+  - entity: button.intel_amt_192_168_1_50_reset_hard
+    name: Hard Reset
+  - entity: button.intel_amt_192_168_1_50_power_off_hard
+    name: Hard Power Off
+
+
+# ── Card 3: Mushroom chips row (requires mushroom-cards from HACS) ────────────
+
+type: custom:mushroom-chips-card
+chips:
+  - type: entity
+    entity: binary_sensor.intel_amt_192_168_1_50_power
+    icon: mdi:desktop-tower
+    icon_color: green
+    content_info: state
+  - type: action
+    icon: mdi:power-on
+    icon_color: blue
+    tap_action:
+      action: call-service
+      service: button.press
+      service_data:
+        entity_id: button.intel_amt_192_168_1_50_power_on
+  - type: action
+    icon: mdi:power-sleep
+    icon_color: orange
+    tap_action:
+      action: call-service
+      service: button.press
+      service_data:
+        entity_id: button.intel_amt_192_168_1_50_shutdown_graceful
+  - type: action
+    icon: mdi:restart
+    icon_color: yellow
+    tap_action:
+      action: call-service
+      service: button.press
+      service_data:
+        entity_id: button.intel_amt_192_168_1_50_reboot_graceful
+
+
+# ── Card 4: History graph — power state over time ─────────────────────────────
+
+type: history-graph
+title: AMT Power History
+hours_to_show: 24
+entities:
+  - entity: binary_sensor.intel_amt_192_168_1_50_power
+    name: Power
+  - entity: sensor.intel_amt_192_168_1_50_power_state
+    name: State

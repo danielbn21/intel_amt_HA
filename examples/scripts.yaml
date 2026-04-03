@@ -1,0 +1,107 @@
+# ============================================================================
+# Intel AMT – Home Assistant Script Examples
+# ============================================================================
+# Add these to scripts.yaml or via the Scripts UI.
+# Replace entity IDs with your actual ones.
+# ============================================================================
+
+# ── Safe reboot: try graceful first, fall back to hard reset ─────────────────
+amt_safe_reboot:
+  alias: "AMT: Safe Reboot (graceful with hard-reset fallback)"
+  description: >
+    Sends a graceful reboot. If the machine is still on after 3 minutes,
+    sends a hard reset as a fallback.
+  icon: mdi:restart
+  sequence:
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_reboot_graceful
+    - delay:
+        minutes: 3
+    - condition: state
+      entity_id: binary_sensor.intel_amt_192_168_1_50_power
+      state: "on"
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_reset_hard
+    - service: notify.persistent_notification
+      data:
+        title: "Intel AMT"
+        message: "Graceful reboot timed out — hard reset sent."
+  mode: single
+
+# ── Safe shutdown: graceful with hard power-off fallback ────────────────────
+amt_safe_shutdown:
+  alias: "AMT: Safe Shutdown (graceful with hard power-off fallback)"
+  description: >
+    Sends a graceful OS shutdown. Falls back to hard power-off after 5 minutes.
+  icon: mdi:power-sleep
+  sequence:
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_shutdown_graceful
+    - delay:
+        minutes: 5
+    - condition: state
+      entity_id: binary_sensor.intel_amt_192_168_1_50_power
+      state: "on"
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_power_off_hard
+    - service: notify.persistent_notification
+      data:
+        title: "Intel AMT"
+        message: "Graceful shutdown timed out — hard power-off sent."
+  mode: single
+
+# ── Power on and wait until reachable ────────────────────────────────────────
+amt_power_on_and_wait:
+  alias: "AMT: Power On and wait for boot"
+  description: >
+    Powers on the machine, then waits until the OS ping/network responds
+    (requires a ping binary sensor for the OS IP).
+  icon: mdi:power-on
+  sequence:
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_power_on
+    - wait_for_trigger:
+        - platform: state
+          entity_id: binary_sensor.ping_workstation
+          to: "on"
+      timeout:
+        minutes: 3
+      continue_on_timeout: true
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.ping_workstation
+              state: "on"
+          sequence:
+            - service: notify.persistent_notification
+              data:
+                title: "Intel AMT"
+                message: "Workstation is online and ready."
+      default:
+        - service: notify.persistent_notification
+          data:
+            title: "Intel AMT"
+            message: "Workstation powered on but did not respond to ping within 3 minutes."
+  mode: single
+
+# ── Emergency NMI + collect logs ─────────────────────────────────────────────
+amt_send_nmi:
+  alias: "AMT: Send NMI (diagnostic interrupt)"
+  description: "Sends a Non-Maskable Interrupt to the machine for crash diagnosis."
+  icon: mdi:bug
+  sequence:
+    - service: notify.persistent_notification
+      data:
+        title: "Intel AMT – NMI Sent"
+        message: >
+          NMI sent to workstation at {{ now().strftime('%Y-%m-%d %H:%M:%S') }}.
+          Check crash dumps / kernel logs after reboot.
+    - service: button.press
+      target:
+        entity_id: button.intel_amt_192_168_1_50_send_nmi
+  mode: single

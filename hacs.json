@@ -1,0 +1,7 @@
+{
+  "name": "Intel AMT",
+  "description": "Control and monitor Intel Active Management Technology (vPro) machines — power on/off, reset, power cycle, hibernate and more, directly from Home Assistant.",
+  "render_readme": true,
+  "homeassistant": "2023.1.0",
+  "hacs": "1.32.0"
+}
